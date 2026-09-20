@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
@@ -35,12 +36,13 @@ const ROLE_LABELS: Record<string, string> = {
 export default function CmsAccountsPage() {
   const { data: session, status } = useSession()
   const [users, setUsers] = useState<AccountUser[]>([])
-  const [filter, setFilter] = useState<'ALL' | 'MENUNGGU_VERIFIKASI' | 'AKTIF' | 'NONAKTIF'>('MENUNGGU_VERIFIKASI')
+  const [filter, setFilter] = useState<'ALL' | 'MENUNGGU_VERIFIKASI' | 'AKTIF' | 'NONAKTIF'>('ALL')
   const [accountTypeFilter, setAccountTypeFilter] = useState<'ALL' | 'WARGA' | 'PENGURUS'>('ALL')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const role = session?.user?.role
   const canChangeRoles = role === 'SUPER_ADMIN'
@@ -125,19 +127,25 @@ export default function CmsAccountsPage() {
     return {
       total: users.length,
       pending: users.filter((u) => u.status === 'MENUNGGU_VERIFIKASI').length,
-      pengurus: users.filter((u) => u.accountType === 'PENGURUS').length,
     }
   }, [users])
+  const visibleUsers = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return users
+    return users.filter((user) => [user.name, user.email, user.phone, user.address].filter(Boolean).some((value) => value!.toLowerCase().includes(query)))
+  }, [users, search])
 
   return (
-    <CmsShell session={session ?? null} active="/cms/accounts" title="Manajemen Akun" subtitle="Verifikasi, aktif/nonaktif, dan role pengurus.">
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Total tampil" value={summary.total} />
+    <CmsShell session={session ?? null} active="/cms/accounts" title="Manajemen akun warga" subtitle="Buat, verifikasi, dan kelola akses warga serta pengurus RW.">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Total akun" value={summary.total} />
+        <Stat label="Akun aktif" value={users.filter((user) => user.status === 'AKTIF').length} />
         <Stat label="Menunggu verifikasi" value={summary.pending} />
-        <Stat label="Pengurus" value={summary.pengurus} />
+        <Stat label="Akun nonaktif" value={users.filter((user) => user.status === 'NONAKTIF').length} />
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama, nomor HP, NIK, atau alamat..." className="h-11 min-w-[280px] flex-1 rounded-xl border border-slate-200 px-4 text-sm outline-none" />
         <label className="text-sm font-semibold text-slate-600">Status</label>
         <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="h-10 rounded-xl border border-slate-200 px-3 text-sm">
           <option value="MENUNGGU_VERIFIKASI">Menunggu verifikasi</option>
@@ -158,13 +166,13 @@ export default function CmsAccountsPage() {
 
       <section className="rounded-3xl bg-white p-6 shadow-sm">
         {loading ? <Spinner /> : null}
-        {!loading && users.length === 0 ? <EmptyState title="Tidak ada akun" description="Belum ada akun pada filter saat ini." /> : null}
+        {!loading && visibleUsers.length === 0 ? <EmptyState title="Tidak ada akun" description="Belum ada akun pada filter saat ini." /> : null}
         <div className="space-y-3">
-          {users.map((u) => (
-            <article key={u.id} className="rounded-2xl border border-slate-100 p-4">
+          {visibleUsers.map((u) => (
+            <article key={u.id} className="rounded-2xl border border-slate-100 p-4 transition hover:border-[#C9C4FF] hover:bg-[#FCFBFF]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-base font-bold text-slate-900">{u.name}</p>
+                  <Link href={`/cms/accounts/${u.id}`} className="text-base font-bold text-slate-900 hover:text-[#5B4BFF]">{u.name}</Link>
                   <p className="text-sm text-slate-500">{u.email ?? 'Tanpa email'} {u.phone ? `· ${u.phone}` : ''}</p>
                   <p className="mt-1 text-xs text-slate-400">{u.address || 'Alamat belum diisi'}</p>
                 </div>
@@ -174,6 +182,7 @@ export default function CmsAccountsPage() {
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={`/cms/accounts/${u.id}`} className="rounded-full border border-[#D9D5FF] px-4 py-1.5 text-xs font-semibold text-[#5B4BFF]">Lihat detail</Link>
                 {u.status === 'MENUNGGU_VERIFIKASI' ? (
                   <button disabled={busy === u.id} onClick={() => verify(u.id)} className="rounded-full bg-[#5b4bff] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{busy === u.id ? 'Memproses...' : 'Verifikasi'}</button>
                 ) : null}
