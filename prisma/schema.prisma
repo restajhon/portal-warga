@@ -53,6 +53,8 @@ model User {
   auditLogs          AuditLog[]
   contents           Content[]
   agendas            Agenda[]
+  documents          Documentation[]
+  programUpdates     ProgramUpdate[]
 
   @@index([status])
   @@index([accountType])
@@ -109,4 +111,33 @@ model Agenda {
 
   @@index([status, startsAt])
   @@map("agendas")
+}
+
+model Documentation {
+  id          String        @id @default(uuid()) @db.Uuid
+  authorId    String        @map("author_id") @db.Uuid
+  title       String
+  description String?
+  mediaUrl    String        @map("media_url")
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  author      User          @relation(fields: [authorId], references: [id])
+
+  @@index([status, createdAt])
+  @@map("documentations")
+}
+
+model ProgramUpdate {
+  id        String        @id @default(uuid()) @db.Uuid
+  authorId  String        @map("author_id") @db.Uuid
+  title     String
+  body      String
+  status    ContentStatus @default(DRAFT)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  author    User          @relation(fields: [authorId], references: [id])
+
+  @@index([status, createdAt])
+  @@map("program_updates")
 }
