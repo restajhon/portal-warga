@@ -35,6 +35,23 @@ enum ContentStatus {
   ARCHIVED
 }
 
+enum TransactionType {
+  PEMASUKAN
+  PENGELUARAN
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+enum FinanceReportStatus {
+  DRAFT
+  MENUNGGU_APPROVAL
+  DISETUJUI
+  DIPUBLIKASIKAN
+}
+
 model User {
   id                 String      @id @default(uuid()) @db.Uuid
   name               String
@@ -55,6 +72,8 @@ model User {
   agendas            Agenda[]
   documents          Documentation[]
   programUpdates     ProgramUpdate[]
+  transactions       FinanceTransaction[]
+  financeReports     FinanceReport[]
 
   @@index([status])
   @@index([accountType])
@@ -140,4 +159,41 @@ model ProgramUpdate {
 
   @@index([status, createdAt])
   @@map("program_updates")
+}
+
+model FinanceTransaction {
+  id            String          @id @default(uuid()) @db.Uuid
+  authorId      String          @map("author_id") @db.Uuid
+  type          TransactionType
+  paymentMethod PaymentMethod   @map("payment_method")
+  category      String
+  description   String
+  amount        Decimal         @db.Decimal(14, 2)
+  occurredAt    DateTime        @map("occurred_at")
+  evidenceUrl   String?         @map("evidence_url")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  author        User            @relation(fields: [authorId], references: [id])
+
+  @@index([occurredAt])
+  @@index([type, occurredAt])
+  @@map("finance_transactions")
+}
+
+model FinanceReport {
+  id          String             @id @default(uuid()) @db.Uuid
+  authorId    String             @map("author_id") @db.Uuid
+  periodStart DateTime           @map("period_start")
+  periodEnd   DateTime           @map("period_end")
+  title       String
+  summary     String?
+  status      FinanceReportStatus @default(DRAFT)
+  approvedAt  DateTime?          @map("approved_at")
+  publishedAt DateTime?          @map("published_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  author      User                @relation(fields: [authorId], references: [id])
+
+  @@index([status, periodStart, periodEnd])
+  @@map("finance_reports")
 }
