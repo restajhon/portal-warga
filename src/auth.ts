@@ -11,6 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        portal: { label: 'Portal', type: 'text' },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials)
@@ -18,6 +19,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({ where: { email: parsed.data.email } })
         if (!user || !user.passwordHash) return null
+        const portal = credentials?.portal === 'ADMIN' ? 'ADMIN' : 'WARGA'
+        if (portal === 'ADMIN' && user.accountType !== 'PENGURUS') return null
+        if (portal === 'WARGA' && user.accountType !== 'WARGA') return null
 
         const passwordMatches = await bcrypt.compare(parsed.data.password, user.passwordHash)
         if (!passwordMatches) return null

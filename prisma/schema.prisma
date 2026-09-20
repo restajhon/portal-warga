@@ -110,7 +110,7 @@ model User {
   sicknessResponses      SicknessReportResponse[]
   verifiedAccounts       User[]              @relation("VerifiedBy")
   verifiedBy             User?               @relation("VerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
-  verifiedById           String?             @map("verified_by")
+  verifiedById           String?             @db.Uuid @map("verified_by")
 
   @@index([status])
   @@index([accountType])

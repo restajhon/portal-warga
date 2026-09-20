@@ -26,6 +26,7 @@ export default function Home() {
     const result = await signIn('credentials', {
       email: parsed.data.email,
       password: parsed.data.password,
+      portal: 'WARGA',
       redirect: false,
     })
 
