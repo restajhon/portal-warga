@@ -2,9 +2,15 @@ import bcrypt from 'bcryptjs'
 import { NextResponse } from 'next/server'
 import { registerSchema } from '@/lib/auth/register-schema'
 import { prisma } from '@/lib/db'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { writeAuditLog } from '@/lib/audit'
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const rate = checkRateLimit(`register:${ip}`, 5, 60_000)
+    if (!rate.allowed) return NextResponse.json({ success: false, error: 'Terlalu banyak percobaan. Coba lagi nanti.' }, { status: 429 })
+
     const parsed = registerSchema.safeParse(await request.json())
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message }, { status: 400 })
@@ -16,6 +22,7 @@ export async function POST(request: Request) {
       data: { name, email, passwordHash, accountType: 'WARGA', status: 'MENUNGGU_VERIFIKASI' },
       select: { id: true, email: true, name: true },
     })
+    await writeAuditLog({ action: 'ACCOUNT_REGISTERED', entityType: 'USER', entityId: user.id, metadata: { accountType: 'WARGA' } })
 
     return NextResponse.json({ success: true, data: user }, { status: 201 })
   } catch (error) {
