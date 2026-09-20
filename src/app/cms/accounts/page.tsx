@@ -136,7 +136,7 @@ export default function CmsAccountsPage() {
   }, [users, search])
 
   return (
-    <CmsShell session={session ?? null} active="/cms/accounts" title="Manajemen akun warga" subtitle="Buat, verifikasi, dan kelola akses warga serta pengurus RW.">
+    <CmsShell session={session ?? null} active="/cms/accounts" title="Manajemen akun warga" subtitle="Lihat, verifikasi, dan kelola akses warga serta pengurus RW.">
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Total akun" value={summary.total} />
         <Stat label="Akun aktif" value={users.filter((user) => user.status === 'AKTIF').length} />
