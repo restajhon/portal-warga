@@ -5,10 +5,12 @@ import { hasPermission } from '@/lib/auth/permissions'
 import { financeReportSchema } from '@/lib/finance-report-schema'
 import { writeAuditLog } from '@/lib/audit'
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth()
   if (!session?.user || session.user.status !== 'AKTIF') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const data = await prisma.financeReport.findMany({ where: { status: 'DIPUBLIKASIKAN' }, orderBy: { periodStart: 'desc' } })
+  const manage = new URL(request.url).searchParams.get('scope') === 'manage'
+  if (manage && !hasPermission(session, 'finance:write')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const data = await prisma.financeReport.findMany({ where: manage ? undefined : { status: 'DIPUBLIKASIKAN' }, orderBy: { periodStart: 'desc' } })
   return NextResponse.json({ data })
 }
 
