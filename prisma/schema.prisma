@@ -24,6 +24,17 @@ enum UserStatus {
   NONAKTIF
 }
 
+enum ContentType {
+  BERITA
+  PENGUMUMAN
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
   id                 String      @id @default(uuid()) @db.Uuid
   name               String
@@ -40,6 +51,7 @@ model User {
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
   auditLogs          AuditLog[]
+  contents           Content[]
 
   @@index([status])
   @@index([accountType])
@@ -61,4 +73,22 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model Content {
+  id          String        @id @default(uuid()) @db.Uuid
+  authorId    String        @map("author_id") @db.Uuid
+  title       String
+  slug        String        @unique
+  body        String
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?     @map("published_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  author      User          @relation(fields: [authorId], references: [id])
+
+  @@index([type, status])
+  @@index([publishedAt])
+  @@map("contents")
 }
