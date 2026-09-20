@@ -11,7 +11,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json()
   const action = body.action === 'approve' ? 'DISETUJUI' : body.action === 'publish' ? 'DIPUBLIKASIKAN' : null
   if (!action) return NextResponse.json({ error: 'Action tidak valid.' }, { status: 400 })
-  const report = await prisma.financeReport.update({ where: { id }, data: { status: action, approvedAt: new Date(), publishedAt: action === 'DIPUBLIKASIKAN' ? new Date() : undefined } })
+  const current = await prisma.financeReport.findUnique({ where: { id } })
+  if (!current) return NextResponse.json({ error: 'Laporan tidak ditemukan.' }, { status: 404 })
+  if (action === 'DISETUJUI' && current.status !== 'MENUNGGU_APPROVAL') return NextResponse.json({ error: 'Laporan belum berada pada status menunggu approval.' }, { status: 409 })
+  if (action === 'DIPUBLIKASIKAN' && current.status !== 'DISETUJUI') return NextResponse.json({ error: 'Laporan harus disetujui sebelum dipublikasikan.' }, { status: 409 })
+  const report = await prisma.financeReport.update({ where: { id }, data: { status: action, approvedAt: action === 'DISETUJUI' ? new Date() : undefined, publishedAt: action === 'DIPUBLIKASIKAN' ? new Date() : undefined } })
   await writeAuditLog({ actorId: session.user.id, action: `FINANCE_REPORT_${action}`, entityType: 'FINANCE_REPORT', entityId: id })
   return NextResponse.json({ data: report })
 }
