@@ -5,7 +5,7 @@ import type { Session } from 'next-auth'
 
 const iconFor = (label: string) => {
   if (label.toLowerCase().includes('akun')) return '♙'
-  if (label.toLowerCase().includes('konten') || label.toLowerCase().includes('agenda')) return '▤'
+  if (label.toLowerCase().includes('konten') || label.toLowerCase().includes('berita') || label.toLowerCase().includes('pengumuman') || label.toLowerCase().includes('agenda')) return '▤'
   if (label.toLowerCase().includes('keuangan')) return '▣'
   if (label.toLowerCase().includes('sakit')) return '♡'
   if (label.toLowerCase().includes('laporan')) return '▤'
