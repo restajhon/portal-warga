@@ -1,107 +1,25 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
 import { PhotoUpload } from '@/components/photo-upload'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
-
-type Content = { id: string; title: string; body: string; type: string; status: string; imageUrl?: string | null }
+type Content = { id: string; title: string; body: string; type: string; status: string; imageUrl?: string | null; createdAt?: string }
+const filters = ['SEMUA', 'BERITA', 'PENGUMUMAN', 'AGENDA', 'DOKUMENTASI', 'PERKEMBANGAN']
+const icon = (type: string) => ({ BERITA: '▤', PENGUMUMAN: '⚑', AGENDA: '▦', DOKUMENTASI: '▧', PERKEMBANGAN: '♧' }[type] || '▤')
 
 export default function CmsContentPage() {
-  const { data: session, status } = useSession()
-  const [items, setItems] = useState<Content[]>([])
-  const [form, setForm] = useState({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' })
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-
-  async function load() {
-    setLoading(true)
-    setError('')
-    const response = await fetch('/api/content?scope=manage')
-    if (!response.ok) {
-      setError('Gagal memuat konten.')
-      setLoading(false)
-      return
-    }
-    setItems((await response.json()).data)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (status === 'authenticated') void load()
-  }, [status])
-
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    setSubmitting(true)
-    setMessage('')
-    setError('')
-    const response = await fetch('/api/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
-    const result = await response.json()
-    if (!response.ok) {
-      setError(result.error ?? 'Konten gagal disimpan.')
-      setSubmitting(false)
-      return
-    }
-    setForm({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' })
-    setMessage('Konten berhasil disimpan.')
-    setSubmitting(false)
-    await load()
-  }
-
-  return (
-    <CmsShell session={session ?? null} active="/cms/content" title="Berita & Pengumuman" subtitle="Susun berita dan pengumuman untuk warga.">
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <form onSubmit={submit} className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">Buat konten</h2>
-          <div className="mt-5 space-y-4">
-            <input required placeholder="Judul" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
-              <option value="BERITA">Berita</option>
-              <option value="PENGUMUMAN">Pengumuman</option>
-            </select>
-            <textarea required placeholder="Isi konten" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="min-h-40 w-full rounded-xl border border-slate-200 p-4 text-sm" />
-            <PhotoUpload value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
-              <option value="DRAFT">Simpan draft</option>
-              <option value="PUBLISHED">Publikasikan</option>
-            </select>
-            {error ? <ErrorBanner message={error} /> : null}
-            {message ? <p className="text-sm text-emerald-700" role="status">{message}</p> : null}
-            <button disabled={submitting} className="h-12 w-full rounded-xl bg-[#5b4bff] text-sm font-bold text-white disabled:opacity-60">{submitting ? 'Menyimpan...' : 'Simpan konten'}</button>
-          </div>
-        </form>
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">Daftar konten</h2>
-          {loading ? <div className="mt-6"><Spinner /></div> : null}
-          {!loading && items.length === 0 ? (
-            <div className="mt-5">
-              <EmptyState title="Belum ada konten" description="Buat berita atau pengumuman dari formulir di samping." />
-            </div>
-          ) : null}
-          <div className="mt-5 space-y-3">
-            {items.map((item) => (
-              <article key={item.id} className="rounded-2xl border border-slate-100 p-4">
-                {item.imageUrl ? <img src={item.imageUrl} alt="" className="mb-3 h-32 w-full rounded-xl object-cover" /> : null}
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-bold text-slate-900">{item.title}</h3>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{item.status}</span>
-                </div>
-                <p className="mt-2 text-sm text-slate-500">{item.type}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-      </div>
-    </CmsShell>
-  )
+  const { data: session, status } = useSession(); const [items, setItems] = useState<Content[]>([]); const [filter, setFilter] = useState('SEMUA'); const [open, setOpen] = useState(false); const [form, setForm] = useState({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' }); const [message, setMessage] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false)
+  async function load() { setLoading(true); const response = await fetch('/api/content?scope=manage'); if (!response.ok) { setError('Gagal memuat konten.'); setLoading(false); return }; setItems((await response.json()).data); setLoading(false) }
+  useEffect(() => { if (status === 'authenticated') void load() }, [status])
+  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); const response = await fetch('/api/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const result = await response.json(); if (!response.ok) { setError(result.error ?? 'Konten gagal disimpan.'); setBusy(false); return }; setForm({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' }); setMessage('Konten berhasil disimpan.'); setBusy(false); setOpen(false); await load() }
+  const filtered = useMemo(() => filter === 'SEMUA' ? items : items.filter(item => item.type === filter), [items, filter]); const published = items.filter(item => item.status === 'PUBLISHED').length; const drafts = items.filter(item => item.status === 'DRAFT').length
+  return <CmsShell session={session ?? null} active="/cms/content" title="Konten & agenda" subtitle="Kelola berita, pengumuman, agenda, dokumentasi, dan perkembangan program." actions={<button onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ Buat konten</button>}>
+    {open ? <form onSubmit={submit} className="mb-6 rounded-3xl bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-lg font-bold">Buat konten baru</h2><button type="button" onClick={() => setOpen(false)} className="text-sm text-[#6F7385]">Tutup</button></div><div className="mt-5 grid gap-4 md:grid-cols-2"><input required placeholder="Judul" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="h-12 rounded-xl border border-slate-200 px-4 text-sm" /><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="h-12 rounded-xl border border-slate-200 px-4 text-sm"><option value="BERITA">Berita</option><option value="PENGUMUMAN">Pengumuman</option></select><textarea required placeholder="Isi konten" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} className="min-h-32 rounded-xl border border-slate-200 p-4 text-sm md:col-span-2" /><PhotoUpload value={form.imageUrl} onChange={imageUrl => setForm({ ...form, imageUrl })} /><select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="h-12 rounded-xl border border-slate-200 px-4 text-sm"><option value="DRAFT">Simpan draft</option><option value="PUBLISHED">Publikasikan</option></select></div>{error ? <div className="mt-4"><ErrorBanner message={error} /></div> : null}{message ? <p className="mt-4 text-sm text-emerald-700">{message}</p> : null}<button disabled={busy} className="mt-5 h-12 rounded-xl bg-[#5B4BFF] px-5 text-sm font-bold text-white">{busy ? 'Menyimpan...' : 'Simpan konten'}</button></form> : null}
+    <div className="mb-5 flex flex-wrap gap-2">{filters.map(item => <button key={item} onClick={() => setFilter(item)} className={`rounded-full px-4 py-2 text-xs font-semibold ${filter === item ? 'bg-[#5B4BFF] text-white' : 'bg-white text-[#6F7385]'}`}>{item[0] + item.slice(1).toLowerCase()}</button>)}</div>
+    <div className="grid gap-6 lg:grid-cols-[1fr_280px]"><section className="space-y-3">{loading ? <Spinner /> : null}{!loading && filtered.length === 0 ? <EmptyState title="Belum ada konten" description="Buat berita atau pengumuman dari tombol di atas." /> : null}{filtered.map(item => <article key={item.id} className="flex items-center gap-4 rounded-3xl bg-white p-4 shadow-sm"><div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#EFEDFF] text-2xl text-[#5B4BFF]">{icon(item.type)}</div><div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[1px] text-[#8D91A1]">{item.type} · {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Baru'}</p><h2 className="mt-1 truncate text-sm font-bold">{item.title}</h2><p className="mt-1 text-xs text-[#8D91A1]">Oleh Admin RW</p></div><span className={`rounded-full px-3 py-2 text-[10px] font-bold ${item.status === 'PUBLISHED' ? 'bg-[#E8F8F0] text-[#16875A]' : 'bg-[#FFF2D9] text-[#B77A00]'}`}>{item.status === 'PUBLISHED' ? 'Terbit' : 'Draft'}</span><span className="text-xl text-[#8D91A1]">⋮</span></article>)}</section><aside className="h-fit rounded-3xl bg-[#0B102F] p-6 text-white"><h2 className="font-bold">Ringkasan bulan ini</h2><div className="mt-5 space-y-4 text-xs"><p className="flex justify-between text-[#C3C6D4]">Konten terbit <strong className="text-white">{published}</strong></p><p className="flex justify-between text-[#C3C6D4]">Terjadwal <strong className="text-white">{items.filter(item => item.status === 'SCHEDULED').length}</strong></p><p className="flex justify-between text-[#C3C6D4]">Draft <strong className="text-white">{drafts}</strong></p></div></aside></div>
+  </CmsShell>
 }

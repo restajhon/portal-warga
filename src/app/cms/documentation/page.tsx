@@ -18,6 +18,7 @@ export default function CmsDocumentationPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [open, setOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -59,8 +60,9 @@ export default function CmsDocumentationPage() {
   }
 
   return (
-    <CmsShell session={session ?? null} active="/cms/documentation" title="Dokumentasi" subtitle="Kelola dokumentasi kegiatan RW yang dapat diakses warga.">
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+    <CmsShell session={session ?? null} active="/cms/documentation" title="Dokumentasi & galeri" subtitle="Kelola album, foto kegiatan, dan visibilitas dokumentasi." actions={<button onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ Buat album</button>}>
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Total album', items.length], ['Total foto', items.length], ['Draft album', items.filter(item => item.status === 'DRAFT').length], ['Storage', 'Lokal']].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-white p-5"><p className="text-xs text-[#6F7385]">{label}</p><p className="mt-3 text-2xl font-bold text-[#5B4BFF]">{value}</p></div>)}</div>
+      {open ? <div className="grid gap-6 lg:grid-cols-[380px_1fr]"> 
         <form onSubmit={submit} className="rounded-3xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Tambah dokumentasi</h2>
           <div className="mt-5 space-y-4">
@@ -96,7 +98,8 @@ export default function CmsDocumentationPage() {
             ))}
           </div>
         </section>
-      </div>
+      </div> : null}
+      {!open ? <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.map(doc => <article key={doc.id} className="overflow-hidden rounded-3xl bg-white p-3 shadow-sm"><img src={doc.mediaUrl} alt="" className="h-36 w-full rounded-2xl object-cover" /><div className="p-3"><h2 className="text-sm font-bold">{doc.title}</h2><p className="mt-2 text-xs text-[#8D91A1]">{doc.status === 'PUBLISHED' ? 'Terbit' : 'Draft'}</p><button onClick={() => setOpen(true)} className="mt-3 w-full rounded-full bg-[#F5F6FA] py-2 text-xs font-semibold text-[#5B4BFF]">Kelola foto</button></div></article>)}</section> : null}
     </CmsShell>
   )
 }

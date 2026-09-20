@@ -18,6 +18,7 @@ export default function CmsProgramUpdatesPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [open, setOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -59,8 +60,9 @@ export default function CmsProgramUpdatesPage() {
   }
 
   return (
-    <CmsShell session={session ?? null} active="/cms/program-updates" title="Program & Kegiatan" subtitle="Sampaikan perkembangan program RW untuk warga.">
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+    <CmsShell session={session ?? null} active="/cms/program-updates" title="Program & Kegiatan" subtitle="Sampaikan perkembangan program RW untuk warga." actions={<button onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ Tambah program</button>}>
+      <div className="mb-5 grid gap-4 sm:grid-cols-3">{[['Total program', items.length], ['Terbit', items.filter(item => item.status === 'PUBLISHED').length], ['Draft', items.filter(item => item.status === 'DRAFT').length]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-white p-5"><p className="text-xs text-[#6F7385]">{label}</p><p className="mt-3 text-2xl font-bold text-[#5B4BFF]">{value}</p></div>)}</div>
+      {open ? <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <form onSubmit={submit} className="rounded-3xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Tulis update program</h2>
           <div className="mt-5 space-y-4">
@@ -96,7 +98,8 @@ export default function CmsProgramUpdatesPage() {
             ))}
           </div>
         </section>
-      </div>
+      </div> : null}
+      {!open ? <section className="space-y-3">{items.map(item => <article key={item.id} className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-sm">{item.imageUrl ? <img src={item.imageUrl} alt="" className="h-16 w-16 rounded-2xl object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EFEDFF] text-2xl text-[#5B4BFF]">♧</div>}<div className="flex-1"><p className="text-[10px] font-bold uppercase tracking-[1px] text-[#8D91A1]">Perkembangan · Program RW</p><h2 className="mt-1 text-sm font-bold">{item.title}</h2><p className="mt-1 line-clamp-1 text-xs text-[#6F7385]">{item.body}</p></div><span className="rounded-full bg-[#E8F8F0] px-3 py-2 text-[10px] font-bold text-[#16875A]">{item.status === 'PUBLISHED' ? 'Terbit' : 'Draft'}</span><span className="text-xl text-[#8D91A1]">⋮</span></article>)}</section> : null}
     </CmsShell>
   )
 }

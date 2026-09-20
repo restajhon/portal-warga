@@ -18,6 +18,7 @@ export default function CmsAgendaPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [open, setOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -59,8 +60,9 @@ export default function CmsAgendaPage() {
   }
 
   return (
-    <CmsShell session={session ?? null} active="/cms/agenda" title="Agenda & Kegiatan" subtitle="Jadwalkan kegiatan RW untuk warga.">
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+    <CmsShell session={session ?? null} active="/cms/agenda" title="Kelola agenda kegiatan" subtitle="Buat jadwal, atur pengingat, dan pantau partisipasi warga." actions={<button onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ Tambah agenda</button>}>
+      <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_330px]"><section className="rounded-3xl bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-lg font-bold">{new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</h2><span className="text-xs font-semibold text-[#5B4BFF]">Hari ini ↑</span></div><div className="mt-5 grid grid-cols-7 gap-2 text-center text-[10px] text-[#8D91A1]">{['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(day => <span key={day}>{day}</span>)}{Array.from({ length: 35 }, (_, index) => { const day = (index % 30) + 1; const marked = items.some(item => new Date(item.startsAt).getDate() === day); return <div key={index} className={`min-h-16 rounded-xl p-2 text-left ${marked ? 'bg-[#EFEDFF] text-[#5B4BFF]' : 'bg-[#FAFAFC]'}`}><span>{day}</span>{marked ? <div className="mt-5 h-1 rounded-full bg-[#5B4BFF]" /> : null}</div> })}</div></section><section className="space-y-3"><h2 className="text-lg font-bold">Agenda mendatang</h2>{items.slice(0, 4).map(item => <article key={item.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm"><div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#5B4BFF] text-white"><strong>{new Date(item.startsAt).getDate()}</strong><span className="text-[9px] uppercase">{new Date(item.startsAt).toLocaleDateString('id-ID', { month: 'short' })}</span></div><div className="min-w-0"><h3 className="truncate text-sm font-bold">{item.title}</h3><p className="mt-1 text-[10px] text-[#8D91A1]">{new Date(item.startsAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} · {item.location || 'Balai RW'}</p><p className="mt-1 text-[10px] font-semibold text-[#5B4BFF]">{item.status === 'PUBLISHED' ? 'Terbit' : 'Draft'}</p></div></article>)}</section></div>
+      {open ? <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <form onSubmit={submit} className="rounded-3xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Buat agenda</h2>
           <div className="mt-5 space-y-4">
@@ -97,7 +99,7 @@ export default function CmsAgendaPage() {
             ))}
           </div>
         </section>
-      </div>
+      </div> : null}
     </CmsShell>
   )
 }
