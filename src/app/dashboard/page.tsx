@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/db'
@@ -28,6 +29,11 @@ export default async function DashboardPage() {
         <div className="mt-8 rounded-2xl bg-[#f7f7fb] p-5 text-sm text-slate-600">
           <p>Account type: <strong>{session.user.accountType ?? 'UNKNOWN'}</strong></p>
           {session.user.role && <p className="mt-1">Role: <strong>{session.user.role}</strong></p>}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {!isPengurus && <Link href="/reports" className="rounded-xl bg-[#5b4bff] px-5 py-3 text-sm font-bold text-white">Laporan Saya</Link>}
+          <Link href="/finance/reports" className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700">Laporan Keuangan</Link>
+          {isPengurus && <Link href="/cms/reports" className="rounded-xl bg-[#5b4bff] px-5 py-3 text-sm font-bold text-white">Kelola Laporan Warga</Link>}
         </div>
         <section className="mt-8">
           <h2 className="text-xl font-bold text-slate-900">Informasi terbaru</h2>
