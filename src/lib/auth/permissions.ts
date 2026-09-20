@@ -40,6 +40,7 @@ export function getPermissionsForRole(role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERASION
 export type NavEntry = { href: string; label: string; permission: Permission }
 
 export const CMS_NAV: NavEntry[] = [
+  { href: '/cms', label: 'Dashboard', permission: 'content:manage' },
   { href: '/cms/content', label: 'Berita/Konten', permission: 'content:manage' },
   { href: '/cms/agenda', label: 'Agenda', permission: 'content:manage' },
   { href: '/cms/documentation', label: 'Dokumentasi', permission: 'content:manage' },
