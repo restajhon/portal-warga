@@ -5,9 +5,14 @@ import { hasPermission } from '@/lib/auth/permissions'
 import { contentSchema } from '@/lib/content-schema'
 import { writeAuditLog } from '@/lib/audit'
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth()
   if (!session?.user || session.user.status !== 'AKTIF') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (new URL(request.url).searchParams.get('scope') === 'manage') {
+    if (!hasPermission(session, 'content:manage')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const contents = await prisma.content.findMany({ orderBy: { createdAt: 'desc' } })
+    return NextResponse.json({ data: contents })
+  }
   const contents = await prisma.content.findMany({ where: { status: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' } })
   return NextResponse.json({ data: contents })
 }
