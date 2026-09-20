@@ -27,7 +27,7 @@
 | Principle | Description | Rationale |
 |-----------|-------------|-----------|
 | Kesederhanaan (Simplicity First) | Modular monolith tunggal — tanpa microservices, tanpa message queue, tanpa cache terpisah | Dikembangkan solo 10–20 jam/minggu; setiap komponen tambahan = beban operasional yang tidak sebanding dengan skala satu RW |
-| Security & Privacy by Design | Akses terbatas (tanpa pendaftaran publik) dan pembatasan akses data kesehatan dirancang di layer skema data & RBAC sejak awal, bukan ditambal kemudian | Detail kesehatan warga adalah data pribadi sensitif (UU PDP, BRD §6 NFR); salah tampilkan = dampak privasi nyata |
+| Security & Privacy by Design | Akses data komunitas tetap dibatasi melalui autentikasi, verifikasi akun, dan RBAC; pendaftaran warga tersedia dari portal tetapi akses data sensitif tetap dibatasi | Detail kesehatan warga adalah data pribadi sensitif (UU PDP, BRD §6 NFR); salah tampilkan = dampak privasi nyata |
 | Biaya Operasional Minimal | Infrastruktur berbasis PaaS free tier; tanpa server yang harus di-maintain | Proyek sosial tanpa anggaran (BRD §7.1); biaya bulanan ≈ Rp0 kecuali domain |
 | Maintainability untuk Solo Dev | Satu bahasa (TypeScript) end-to-end, struktur folder modular per domain, dokumentasi seiring kode | Satu orang memegang semua peran (PEP §2.2); ongkos konteks-switch harus ditekan |
 | Evolusi Bertahap | Arsitektur tidak menghalangi penambahan kemampuan masa depan (mobile app, iuran online) tapi tidak membangunnya lebih awal | MoM §6: responsive web dulu; YAGNI untuk fitur out-of-scope |
@@ -163,7 +163,7 @@ C4Component
 | **Frontend & Backend** | Next.js (App Router, TypeScript) | 15.x | Responsive web + API route handlers dalam satu codebase |
 | **ORM** | Prisma | 6.x | Akses database, migrasi skema, type-safe |
 | **Database** | PostgreSQL | 16.x (managed) | Primary data store — hosted Neon atau Supabase |
-| **Authentication** | Auth.js (NextAuth v5) | 5.x | Sesi login, credentials provider (tanpa pendaftaran publik) |
+| **Authentication** | Auth.js (NextAuth v5) | 5.x | Registrasi warga dari portal, login credentials berbasis email/password, sesi, dan RBAC |
 | **Styling** | Tailwind CSS | 4.x | Responsive UI (mobile-first) tanpa framework CSS berat |
 | **Hosting** | Vercel | — | Deploy web, preview per branch, CDN edge |
 | **Object Storage** | Supabase Storage / Vercel Blob | — | Bukti transaksi & dokumentasi kegiatan |
@@ -384,7 +384,7 @@ erDiagram
 
 | Aspect | Implementation |
 |--------|----------------|
-| Auth Method | Session cookie httpOnly (Auth.js credentials provider) — tanpa pendaftaran publik; akun dibuat/diaktifkan pengurus, password awal dibuat sendiri oleh warga melalui activation/setup flow |
+| Auth Method | Session cookie httpOnly (Auth.js credentials provider) — warga dapat mendaftar dari portal menggunakan email dan password sendiri; pengurus mengelola verifikasi/status akun dan role pengurus |
 | Session TTL | 30 hari (warga jarang login; keseimbangan keamanan vs kenyamanan) |
 | Password Hashing | bcrypt (cost 12) |
 | Authorization | Role-Based Access Control (RBAC) — middleware + guard per route/action |

@@ -12,7 +12,7 @@ Role pengurus:
 - `ADMIN`
 - `OPERASIONAL`
 
-`WARGA` adalah account type, bukan role pengurus. Audit log hanya dapat dilihat Super Admin. Password awal dibuat sendiri oleh warga melalui activation flow dan tidak pernah dapat dilihat pengurus.
+`WARGA` adalah account type, bukan role pengurus. Warga dapat membuat akun sendiri dari portal menggunakan email dan password. Pengurus dapat memverifikasi, menonaktifkan, atau mengaktifkan akun sesuai kewenangan. Audit log hanya dapat dilihat Super Admin. Password tidak pernah dapat dilihat pengurus.
 
 ## Local setup
 

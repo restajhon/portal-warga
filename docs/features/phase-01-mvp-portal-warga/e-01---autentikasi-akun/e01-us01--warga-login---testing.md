@@ -31,7 +31,7 @@ Feature: Warga login ke portal
 
   @happy-path
   Scenario: Warga login dengan kredensial benar
-    When Budi membuka portal dan mengisi username serta password yang benar lalu menekan "Masuk"
+    When Budi membuka portal dan mengisi email serta password yang benar lalu menekan "Masuk"
     Then sesi login dibuat untuk Budi
     And Budi diarahkan ke dashboard warga
     And Budi melihat navigasi portal (beranda, keuangan, laporan saya)
@@ -94,21 +94,21 @@ Feature: Warga login ke portal
 - Suggested priority: P1
 - Key selectors or interaction targets:
   - CTA "Masuk" (UX-01)
-  - Input username & password + toggle lihat (UX-02, UX-03)
+  - Input email & password + toggle lihat (UX-02, UX-03)
   - Area pesan error di atas CTA
 - Assertions:
   - URL dashboard sesuai role setelah login sukses (warga vs CMS pengurus).
-  - Teks error generik sama untuk "username salah" vs "password salah" (anti user-enumeration).
+  - Teks error generik sama untuk "email salah" vs "password salah" (anti user-enumeration).
   - Setelah logout, akses URL internal dialihkan ke `/login`.
   - LocalStorage/browser tidak menyimpan password.
 
 ## Test Data
 
-- Akun warga aktif (identifier uji: `budi@example.test` atau nomor telepon uji, password dibuat melalui activation flow).
+- Akun warga aktif (email uji: `budi@example.test`, password dibuat saat registrasi).
+- Akun warga baru/nonaktif untuk verifikasi aturan status setelah registrasi.
 - Akun Super Admin aktif (role `super_admin`) — verifikasi routing CMS dan akses audit log.
 - Akun Admin aktif (role `admin`) — verifikasi routing CMS dan permission administrasi.
 - Akun Operasional aktif (role `operasional`) — verifikasi routing CMS dan permission operasional.
-- Akun warga berstatus nonaktif.
 - Akun warga aktif untuk skenario rate limiting (dapat direset antar-run).
 
 ## Open QA Questions

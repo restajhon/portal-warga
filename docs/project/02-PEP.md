@@ -182,7 +182,7 @@ Scope     Akun &    Info &    RW        Warga     Integrasi Go-Live
 
 **Deliverables:**
 - [ ] Scope MVP disepakati (catatan konfirmasi Pak Jono)
-- [ ] User flow 3 role (warga, admin, bendahara)
+- [ ] User flow registrasi warga + role pengurus (Super Admin, Admin, Operasional)
 - [ ] Struktur database awal (draft)
 - [ ] Desain awal / prototype
 - [ ] Usulan teknologi & infrastruktur + estimasi biaya operasional
@@ -197,16 +197,16 @@ Scope     Akun &    Info &    RW        Warga     Integrasi Go-Live
 | Feature ID | Feature | Story Points | Owner | Status |
 |------------|---------|--------------|-------|--------|
 | FEAT-001 | Login dan autentikasi pengguna | 5 | Resta | Planned |
-| FEAT-002 | Pembuatan & verifikasi akun warga oleh admin (tanpa pendaftaran publik) | 5 | Resta | Planned |
+| FEAT-002 | Registrasi mandiri dan verifikasi/status akun warga | 5 | Resta | Planned |
 | FEAT-003 | Manajemen data akun warga (data warga, aktivasi/nonaktivasi) | 3 | Resta | Planned |
 | FEAT-004 | Manajemen role Admin RW, Bendahara, dan Warga | 3 | Resta | Planned |
 | FEAT-005 | Dashboard warga | 3 | Resta | Planned |
 
-**Sprint Goal:** Warga dapat login ke portal dengan akun yang dibuat/dieverifikasi admin; pengurus memiliki role akses yang sesuai; dashboard warga dasar tersedia.
+**Sprint Goal:** Warga dapat membuat akun dari portal menggunakan email dan password, login ke portal, lalu diarahkan sesuai account type/role; pengurus dapat memverifikasi dan mengelola status akun; dashboard warga dasar tersedia.
 
 **Deliverables:**
-- [ ] E2E: admin membuat akun → warga login → melihat dashboard (di staging)
-- [ ] RBAC 3 role berfungsi (warga, admin, bendahara)
+- [ ] E2E: warga registrasi dengan email/password → login → melihat dashboard (di staging)
+- [ ] RBAC role pengurus berfungsi (Super Admin, Admin, Operasional) dan account type Warga
 - [ ] ITA finalisasi
 
 ---
@@ -319,7 +319,7 @@ Scope     Akun &    Info &    RW        Warga     Integrasi Go-Live
 
 | Meeting | Frequency | Participants | Day/Time | Output |
 |---------|-----------|--------------|----------|--------|
-| Sinkronisasi & Demo | Per sprint (tiap 2 minggu, akhir sprint) | Resta + Pak Jono (± admin/bendahara) | Minggu ke-2, waktu fleksibel | Demo, feedback, keputusan sprint berikutnya |
+| Sinkronisasi & Demo | Per sprint (tiap 2 minggu, akhir sprint) | Resta + Pak Jono (± pengurus) | Minggu ke-2, waktu fleksibel | Demo, feedback, keputusan sprint berikutnya |
 | UAT Session | Per UAT window (Sprint 6) | Resta + pengurus + perwakilan warga | Disepakati bersama | UAT sign-off |
 | Go-Live Review | Sekali (sebelum M5) | Resta + Pak Jono + sponsor | Disepakati bersama | Go-live approval |
 

@@ -28,14 +28,13 @@ Login adalah pintu masuk seluruh nilai portal (informasi, transparansi keuangan,
 ## 2. Delivery Context
 
 ### Assumptions
-- Akun warga sudah dibuat dan diverifikasi oleh pengurus (story pembuatan akun — FEAT-002, US berikutnya).
-- Warga menerima activation flow dan membuat password awal sendiri; pengurus tidak pernah dapat melihat password plaintext.
-- Username login dapat berupa nomor telepon atau email; satu nomor telepon hanya untuk satu akun warga.
+- Registrasi warga dilakukan dari portal menggunakan email dan password.
+- Akun warga harus mengikuti aturan status/verifikasi yang ditetapkan pengurus.
+- Pengurus tidak pernah menerima atau melihat password plaintext.
 
 ### Dependencies
-- FEAT-004 manajemen role harus tersedia minimal sebagai data role pengurus (`super_admin`, `admin`, `operasional`) di backend agar login mengarahkan ke tampilan dan permission yang sesuai.
-- Activation/setup flow tersedia agar warga membuat password awal sendiri.
-- Internal user ID digunakan sebagai identitas akun permanen; nomor telepon/email hanya identifier login.
+- FEAT-002 registrasi mandiri dan verifikasi/status akun warga tersedia.
+- Internal user ID digunakan sebagai identitas akun permanen; email menjadi identifier login MVP.
 - Infrastruktur staging Vercel + DB aktif (PEP S1, ITA §8).
 
 ### Out of Scope
@@ -47,7 +46,7 @@ Login adalah pintu masuk seluruh nilai portal (informasi, transparansi keuangan,
 
 ### Acceptance Criteria
 1. Halaman login tersedia di root portal untuk pengunjung tanpa sesi aktif; tidak ada konten warga yang tampil sebelum login.
-2. Warga dapat login dengan nomor telepon atau email + password yang benar dan sampai ke dashboard sesuai account type/role (warga → dashboard warga; Super Admin/Admin/Operasional → CMS sesuai permission).
+2. Warga dapat login dengan email + password yang dibuat saat registrasi dan sampai ke dashboard sesuai account type/role (warga → dashboard warga; Super Admin/Admin/Operasional → CMS sesuai permission).
 3. Kombinasi kredensial salah menampilkan pesan kesalahan generik (tidak membocorkan field mana yang salah) dan tidak membuat sesi.
 4. Setelah 5 kali percobaan gagal dalam 10 menit dari satu akun/IP, percobaan berikutnya ditolak sementara (rate limiting) dengan pesan coba lagi nanti [Usulan angka — selaras ITA §6.2].
 5. Sesi aktif bertahan hingga 30 hari atau sampai logout (ITA §6.1); logout mengakhiri sesi dan mengembalikan ke halaman login.

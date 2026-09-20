@@ -37,7 +37,7 @@ Portal ini mengambil inspirasi dari [RTRW Online](https://rtrwonline.id/), namun
 Membangun **website Portal Warga RW** berbasis responsive web (belum aplikasi mobile native) yang terdiri dari dua sisi:
 
 1. **Portal Warga (frontend).** Warga login untuk membaca berita, pengumuman, agenda, dan perkembangan kegiatan RW; melihat laporan keuangan yang telah dipublikasikan; serta mengirimkan laporan, aspirasi, dan laporan kondisi sedang sakit beserta status penanganannya.
-2. **CMS Pengurus RW (backend).** Admin RW mengelola akun dan akses warga (tanpa pendaftaran publik bebas — akun dibuat/dieverifikasi admin), mengelola konten informasi, serta menerima dan memproses laporan warga. Bendahara mencatat transaksi keuangan (pemasukan/pengeluaran beserta bukti) dan menyiapkan laporan keuangan untuk dipublikasikan.
+2. **CMS Pengurus RW (backend).** Pengurus mengelola verifikasi/status akun warga, role dan permission, konten informasi, serta menerima dan memproses laporan warga. Warga dapat membuat akun sendiri melalui portal menggunakan email dan password.
 
 Akses dibatasi hanya untuk warga dan pengurus RW yang telah diverifikasi. Detail data kesehatan pada modul pelaporan warga sakit hanya dapat diakses pengurus yang berwenang dan tidak ditampilkan terbuka kepada seluruh warga.
 
@@ -76,7 +76,7 @@ Proyek dianggap berhasil jika:
 2. Satu siklus end-to-end informasi berjalan: pengurus membuat berita/pengumuman/agenda → warga login → warga membaca informasi tersebut.
 3. Satu siklus end-to-end laporan warga berjalan: warga mengirim laporan → pengurus menerima dan memproses → pengurus menanggapi → status laporan berubah hingga selesai → warga dapat melihat status dan tanggapan.
 4. Satu siklus end-to-end keuangan berjalan: bendahara mencatat transaksi (dengan bukti) → rekap saldo tersaji → laporan dipublikasikan → warga dapat melihat laporan keuangan.
-5. Akun warga hanya dapat dibuat/diverifikasi oleh admin RW — tidak ada pendaftaran publik bebas.
+5. Warga dapat membuat akun sendiri menggunakan email dan password; pengurus mengelola verifikasi/status akun dan aksesnya.
 6. Detail data kesehatan warga yang sedang sakit tidak pernah tampil secara terbuka kepada seluruh warga — hanya pengurus berwenang.
 7. Portal dapat digunakan dengan baik melalui smartphone maupun desktop (responsive).
 
@@ -119,7 +119,7 @@ Proyek dianggap berhasil jika:
 | 1 | Portal informasi digital dengan CMS pengurus | Warga mengakses berita, pengumuman, agenda, dokumentasi, dan perkembangan kegiatan kapan saja; pengurus mempublikasikan informasi secara mandiri |
 | 2 | Modul keuangan dengan pencatatan transaksi terstruktur dan publikasi laporan | Transparansi keuangan meningkat; warga dapat memantau laporan keuangan yang telah dipublikasikan |
 | 3 | Modul Laporan Warga dengan alur status terlacak | Komunikasi dua arah yang rapi; warga dapat memantau status laporan (Terkirim → Selesai/dsb) dan membaca tanggapan pengurus |
-| 4 | Akun warga yang dibuat/dieverifikasi admin | Akses portal benar-benar terbatas untuk warga setempat; konten komunitas tidak tampil publik |
+| 4 | Akun warga dengan registrasi mandiri dan verifikasi/status oleh pengurus | Warga dapat mulai menggunakan portal dengan email/password sendiri, sementara akses komunitas tetap terkendali |
 | 5 | Modul pelaporan warga yang sedang sakit dengan akses terbatas | Kebutuhan bantuan warga sakit dapat ditindaklanjuti pengurus dengan menjaga privasi data kesehatan |
 | 6 | Responsive web untuk mobile dan desktop | Warga nyaman mengakses portal dari perangkat yang dimiliki tanpa instalasi aplikasi |
 
@@ -133,7 +133,7 @@ Proyek dianggap berhasil jika:
 
 | Epic ID | Epic Name | Description | Priority |
 |---------|-----------|-------------|----------|
-| EPIC-001 | Autentikasi & Manajemen Akun | Login pengguna, pembuatan dan verifikasi akun warga oleh admin (tanpa pendaftaran publik), manajemen role Admin RW / Bendahara / Warga, serta dashboard warga. | Must Have |
+| EPIC-001 | Autentikasi & Manajemen Akun | Registrasi mandiri warga, login email/password, verifikasi/status akun oleh pengurus, manajemen role Super Admin/Admin/Operasional, serta dashboard warga. | Must Have |
 | EPIC-002 | Portal Informasi & CMS Konten | CMS pengurus untuk mengelola berita, pengumuman, agenda dan kegiatan, dokumentasi, serta perkembangan program RW — ditampilkan kepada warga yang login. | Must Have |
 | EPIC-003 | Keuangan RW | Pencatatan pemasukan/pengeluaran dengan kategori, deskripsi, nominal, tanggal, dan bukti transaksi; rekap saldo; penyusunan dan publikasi laporan keuangan kepada warga. | Must Have |
 | EPIC-004 | Laporan Warga | Kanal laporan, keluhan, aspirasi, dan permintaan bantuan dari warga kepada pengurus, dengan alur penerimaan, tanggapan, dan pembaruan status yang terlacak. Tidak menggunakan konsep/nama "Saran dan Keluhan – Hallo Pak Lurah". | Must Have |
@@ -148,7 +148,7 @@ Proyek dianggap berhasil jika:
 | Feature ID | Feature Name | Priority | SPEC Reference |
 |------------|--------------|----------|----------------|
 | FEAT-001 | Login dan autentikasi pengguna | Must Have | `docs/features/001-akun/01-feature---business.md` |
-| FEAT-002 | Pembuatan & verifikasi akun warga oleh admin (tanpa pendaftaran publik) | Must Have | `docs/features/001-akun/02-feature---business.md` |
+| FEAT-002 | Registrasi mandiri dan verifikasi/status akun warga | Must Have | `docs/features/001-akun/02-feature---business.md` |
 | FEAT-003 | Manajemen data akun warga (data warga, aktivasi/nonaktivasi) | Must Have | `docs/features/001-akun/03-feature---business.md` |
 | FEAT-004 | Manajemen role Admin RW, Bendahara, dan Warga | Must Have | `docs/features/001-akun/04-feature---business.md` |
 | FEAT-005 | Dashboard warga | Must Have | `docs/features/001-akun/05-feature---business.md` |
@@ -216,8 +216,8 @@ Fitur berikut **tidak termasuk** scope tahap awal dan tidak dikembangkan dalam M
 |----------|-------------|--------|
 | **Performance** | Waktu muat halaman portal | < 3 detik pada koneksi internet seluler standar [Usulan] |
 | **Availability** | Ketersediaan sistem | ≥ 99% (menyesuaikan layanan hosting yang dipilih [TBD]) |
-| **Security** | Autentikasi | Login username/password; tanpa pendaftaran publik — akun dibuat/dieverifikasi admin RW |
-| **Security** | Akses berbasis role | Admin RW, Bendahara, dan Warga memiliki hak akses berbeda sesuai perannya |
+| **Security** | Autentikasi | Login email/password; warga dapat registrasi dari portal; akses data dibatasi oleh verifikasi/status akun dan RBAC |
+| **Security** | Akses berbasis role | Super Admin, Admin, Operasional, dan Warga memiliki hak akses berbeda sesuai account type/permission |
 | **Security** | Privasi data kesehatan | Detail data pelaporan warga sakit hanya dapat diakses pengurus berwenang; tidak ditampilkan terbuka kepada seluruh warga |
 | **Security** | Enkripsi transmisi | HTTPS/TLS untuk seluruh komunikasi klien-server [Usulan] |
 | **Compliance** | Kepatuhan UU PDP | Data pribadi warga dan data kesehatan ditangani sesuai regulasi perlindungan data pribadi Indonesia |

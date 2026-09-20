@@ -46,9 +46,10 @@ Untuk tahap awal, satu nomor telepon hanya boleh dimiliki satu akun warga.
 
 ### Password awal
 
-- Admin membuat atau mengaktifkan akun warga.
-- Warga sendiri membuat password awal melalui activation/setup flow.
-- Admin tidak pernah melihat, menerima, atau dapat mengambil password warga.
+- Registrasi warga tersedia dari portal.
+- Login menggunakan email dan password yang dibuat warga saat registrasi.
+- Pengurus dapat memverifikasi, menonaktifkan, dan mengaktifkan akun warga.
+- Tidak ada password plaintext yang dapat dilihat pengurus.
 - Database hanya menyimpan password hash.
 
 ### Solusi ketika nomor telepon berubah
@@ -223,13 +224,14 @@ ITA v1.0 harus dikoreksi pada bagian berikut sebelum coding:
 
 1. Ganti enum role lama `admin_rw | bendahara | warga` menjadi role pengurus `super_admin | admin | operasional`, dengan warga sebagai account type.
 2. Ganti seluruh referensi Admin RW/Bendahara pada role matrix.
-3. Tambahkan permission matrix yang eksplisit.
-4. Ubah account lifecycle agar warga membuat password awal sendiri.
-5. Tambahkan contact-change/recovery flow untuk nomor telepon berubah.
-6. Tambahkan `payment_method` dengan pilihan `cash | transfer`.
-7. Tambahkan status approval laporan keuangan dan approval oleh Super Admin.
-8. Tambahkan export PDF/XLSX.
-9. Tegaskan bukti transfer internal-only.
-10. Tegaskan audit log hanya dapat dilihat Super Admin.
-11. Tambahkan aturan edit/tidak bisa hapus untuk laporan warga.
-12. Perbarui seluruh referensi timeline dan project end.
+3. Ubah account lifecycle menjadi self-registration warga dengan email/password.
+4. Tetapkan aturan verifikasi/status akun setelah registrasi.
+5. Tambahkan permission matrix yang eksplisit.
+6. Tambahkan contact-change/recovery flow untuk nomor telepon bila nomor dipakai sebagai data kontak.
+7. Tambahkan `payment_method` dengan pilihan `cash | transfer`.
+8. Tambahkan status approval laporan keuangan dan approval oleh Super Admin.
+9. Tambahkan export PDF/XLSX.
+10. Tegaskan bukti transfer internal-only.
+11. Tegaskan audit log hanya dapat dilihat Super Admin.
+12. Tambahkan aturan edit/tidak bisa hapus untuk laporan warga.
+13. Perbarui seluruh referensi timeline dan project end.

@@ -14,9 +14,9 @@
 flowchart TD
   Start([Pengunjung membuka portal]) --> HasSession{Ada sesi aktif?}
   HasSession -->|Ya| Dashboard([Diarahkan ke dashboard sesuai role])
-  HasSession -->|Tidak| Login[Halaman login: username & password]
+  HasSession -->|Tidak| Login[Halaman login: email & password]
   Login --> Submit[Tekan Masuk]
-  Submit --> Valid{Kredensial valid & akun aktif?}
+  Submit --> Valid{Email/password valid & akun aktif?}
   Valid -->|Ya| Success([Sesi dibuat — dashboard sesuai account type/role & permission])
   Valid -->|Tidak| Error[Pesan kesalahan generik]
   Valid -->|Nonaktif| Nonaktif[Pesan akun nonaktif + hubungi admin]
@@ -26,7 +26,7 @@ flowchart TD
 
 ## Wireframe Description
 
-Halaman login satu layar, mobile-first: logo/nama portal di atas, tagline singkat (mis. "Portal Warga RW [nama]"), dua input (nomor telepon atau email, password dengan toggle lihat), CTA "Masuk" full-width, dan di bawah teks bantuan "Belum punya akun atau lupa password? Hubungi pengurus RW" beserta kontak admin. Umpan balik (error, loading) muncul di area antara form dan CTA. Tidak ada tautan registrasi.
+Halaman login satu layar, mobile-first: logo/nama portal di atas, tagline singkat (mis. "Portal Warga RW [nama]"), dua input (email, password dengan toggle lihat), CTA "Masuk" full-width, dan di bawah tautan "Belum punya akun? Daftar" serta teks "Lupa password? Hubungi pengurus RW" beserta kontak admin. Umpan balik (error, loading) muncul di area antara form dan CTA.
 
 ## Wireframe
 
@@ -36,8 +36,8 @@ Halaman login satu layar, mobile-first: logo/nama portal di atas, tagline singka
 |              Portal Warga RW [Nama]              |
 |         Informasi & layanan warga terverifikasi  |
 |                                                  |
-|  Username                                        |
-|  [____________________________]                  |
+| Email                                         |
+| [____________________________]                |
 |                                                  |
 |  Password                            [lihat]     |
 |  [____________________________]                  |
@@ -56,7 +56,7 @@ Halaman login satu layar, mobile-first: logo/nama portal di atas, tagline singka
 | Marker | Component/Input | User Action | Expected Feedback |
 |--------|-----------------|-------------|-------------------|
 | UX-01 | CTA "Masuk" | Tap/klik | Loading (tombol nonaktif, spinner) → sesi berhasil: pindah ke dashboard sesuai account type/role & permission; atau pesan error generik di atas CTA |
-| UX-02 | Input username & password | Ketik | Validasi inline saat submit: field kosong ditandai + pesan wajib isi |
+| UX-02 | Input email & password | Ketik | Validasi inline saat submit: field kosong ditandai + pesan wajib isi |
 | UX-03 | Toggle "lihat" password | Tap | Tampilkan/sembunyikan karakter password |
 | UX-04 | Teks bantuan "hubungi pengurus RW" | Tap/klik (jika kontak berupa tautan) | Membuka kontak admin (tel/WA) |
 
