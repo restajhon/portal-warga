@@ -3,16 +3,17 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
+import { PhotoUpload } from '@/components/photo-upload'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
 
-type Content = { id: string; title: string; body: string; type: string; status: string }
+type Content = { id: string; title: string; body: string; type: string; status: string; imageUrl?: string | null }
 
 export default function CmsContentPage() {
   const { data: session, status } = useSession()
   const [items, setItems] = useState<Content[]>([])
-  const [form, setForm] = useState({ title: '', body: '', type: 'BERITA', status: 'DRAFT' })
+  const [form, setForm] = useState({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -51,7 +52,7 @@ export default function CmsContentPage() {
       setSubmitting(false)
       return
     }
-    setForm({ title: '', body: '', type: 'BERITA', status: 'DRAFT' })
+    setForm({ title: '', body: '', type: 'BERITA', status: 'DRAFT', imageUrl: '' })
     setMessage('Konten berhasil disimpan.')
     setSubmitting(false)
     await load()
@@ -69,6 +70,7 @@ export default function CmsContentPage() {
               <option value="PENGUMUMAN">Pengumuman</option>
             </select>
             <textarea required placeholder="Isi konten" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="min-h-40 w-full rounded-xl border border-slate-200 p-4 text-sm" />
+            <PhotoUpload value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
               <option value="DRAFT">Simpan draft</option>
               <option value="PUBLISHED">Publikasikan</option>
@@ -89,6 +91,7 @@ export default function CmsContentPage() {
           <div className="mt-5 space-y-3">
             {items.map((item) => (
               <article key={item.id} className="rounded-2xl border border-slate-100 p-4">
+                {item.imageUrl ? <img src={item.imageUrl} alt="" className="mb-3 h-32 w-full rounded-xl object-cover" /> : null}
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-bold text-slate-900">{item.title}</h3>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{item.status}</span>

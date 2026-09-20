@@ -3,16 +3,17 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
+import { PhotoUpload } from '@/components/photo-upload'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
 
-type Agenda = { id: string; title: string; description: string; location?: string | null; startsAt: string; status: string }
+type Agenda = { id: string; title: string; description: string; location?: string | null; startsAt: string; status: string; imageUrl?: string | null }
 
 export default function CmsAgendaPage() {
   const { data: session, status } = useSession()
   const [items, setItems] = useState<Agenda[]>([])
-  const [form, setForm] = useState({ title: '', description: '', location: '', startsAt: '', status: 'DRAFT' })
+  const [form, setForm] = useState({ title: '', description: '', location: '', startsAt: '', status: 'DRAFT', imageUrl: '' })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -51,7 +52,7 @@ export default function CmsAgendaPage() {
       setSubmitting(false)
       return
     }
-    setForm({ title: '', description: '', location: '', startsAt: '', status: 'DRAFT' })
+    setForm({ title: '', description: '', location: '', startsAt: '', status: 'DRAFT', imageUrl: '' })
     setMessage('Agenda berhasil disimpan.')
     setSubmitting(false)
     await load()
@@ -67,6 +68,7 @@ export default function CmsAgendaPage() {
             <textarea required placeholder="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="min-h-28 w-full rounded-xl border border-slate-200 p-4 text-sm" />
             <input placeholder="Lokasi" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
             <input required type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
+            <PhotoUpload value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} />
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
               <option value="DRAFT">Simpan draft</option>
               <option value="PUBLISHED">Publikasikan</option>
@@ -85,6 +87,7 @@ export default function CmsAgendaPage() {
           <div className="mt-5 space-y-3">
             {items.map((item) => (
               <article key={item.id} className="rounded-2xl border border-slate-100 p-4">
+                {item.imageUrl ? <img src={item.imageUrl} alt="" className="mb-3 h-32 w-full rounded-xl object-cover" /> : null}
                 <div className="flex justify-between gap-3">
                   <h3 className="font-bold">{item.title}</h3>
                   <span className="text-xs font-semibold">{item.status}</span>

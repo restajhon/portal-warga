@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
+import { PhotoUpload } from '@/components/photo-upload'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
@@ -65,7 +66,7 @@ export default function CmsDocumentationPage() {
           <div className="mt-5 space-y-4">
             <input required placeholder="Judul" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
             <textarea placeholder="Deskripsi (opsional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="min-h-24 w-full rounded-xl border border-slate-200 p-4 text-sm" />
-            <input required type="url" placeholder="https://link-media.example.com/foto.jpg" value={form.mediaUrl} onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
+            <PhotoUpload value={form.mediaUrl} onChange={(mediaUrl) => setForm({ ...form, mediaUrl })} />
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
               <option value="DRAFT">Simpan draft</option>
               <option value="PUBLISHED">Publikasikan</option>
@@ -89,8 +90,8 @@ export default function CmsDocumentationPage() {
                   <h3 className="font-bold text-slate-900">{doc.title}</h3>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{doc.status}</span>
                 </div>
+                <img src={doc.mediaUrl} alt="" className="mb-3 h-32 w-full rounded-xl object-cover" />
                 {doc.description ? <p className="mt-2 text-sm text-slate-600">{doc.description}</p> : null}
-                <p className="mt-2 text-xs text-slate-400">Media: {doc.mediaUrl}</p>
               </article>
             ))}
           </div>
