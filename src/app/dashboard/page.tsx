@@ -18,6 +18,7 @@ export default async function DashboardPage() {
 
   const isPengurus = session.user.accountType === 'PENGURUS'
   const contents = await prisma.content.findMany({ where: { status: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' }, take: 10 })
+  const agendas = await prisma.agenda.findMany({ where: { status: 'PUBLISHED', startsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 5 })
   return (
     <main className="min-h-screen bg-[#f7f7fb] px-5 py-10">
       <section className="mx-auto max-w-5xl rounded-3xl bg-white p-8 shadow-sm">
@@ -40,6 +41,10 @@ export default async function DashboardPage() {
               </article>
             ))}
           </div>
+        </section>
+        <section className="mt-8">
+          <h2 className="text-xl font-bold text-slate-900">Agenda mendatang</h2>
+          <div className="mt-4 space-y-3">{agendas.length === 0 && <p className="text-sm text-slate-500">Belum ada agenda mendatang.</p>}{agendas.map((agenda) => <article key={agenda.id} className="rounded-2xl border border-slate-100 p-5"><h3 className="font-bold text-slate-900">{agenda.title}</h3><p className="mt-2 text-sm text-slate-600">{new Date(agenda.startsAt).toLocaleString('id-ID')} · {agenda.location || 'Lokasi belum ditentukan'}</p><p className="mt-2 text-sm text-slate-500">{agenda.description}</p></article>)}</div>
         </section>
       </section>
     </main>
