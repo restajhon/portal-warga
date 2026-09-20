@@ -67,6 +67,20 @@ enum CitizenReportStatus {
   TIDAK_DAPAT_DIPROSES
 }
 
+enum SicknessReportStatus {
+  TERKIRIM
+  DITINJAU
+  DIBANTU
+  SELESAI
+  TIDAK_DAPAT_DIPROSES
+}
+
+enum SicknessSeverity {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
 model User {
   id                 String      @id @default(uuid()) @db.Uuid
   name               String
@@ -91,6 +105,12 @@ model User {
   financeReports     FinanceReport[]
   citizenReports     CitizenReport[]
   reportResponses    CitizenReportResponse[]
+  sicknessReports        SicknessReport[]
+  sicknessReportHelped   SicknessReportDetail[]
+  sicknessResponses      SicknessReportResponse[]
+  verifiedAccounts       User[]              @relation("VerifiedBy")
+  verifiedBy             User?               @relation("VerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  verifiedById           String?             @map("verified_by")
 
   @@index([status])
   @@index([accountType])
@@ -247,4 +267,60 @@ model CitizenReportResponse {
   @@index([reportId, createdAt])
   @@index([responderId])
   @@map("citizen_report_responses")
+}
+
+/// Sickness report public metadata. Health details live in SicknessReportDetail
+/// and are protected by field-level permission. See DECISIONS-BASELINE §5.
+model SicknessReport {
+  id              String                @id @default(uuid()) @db.Uuid
+  reporterId      String                @map("reporter_id") @db.Uuid
+  patientName     String                @map("patient_name")
+  patientAddress  String?               @map("patient_address")
+  patientRt       String?               @map("patient_rt")
+  assistanceNeed  String                @map("assistance_need")
+  severity        SicknessSeverity      @default(RINGAN)
+  status          SicknessReportStatus  @default(TERKIRIM)
+  resolvedAt      DateTime?             @map("resolved_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+  reporter        User                  @relation(fields: [reporterId], references: [id])
+  details         SicknessReportDetail[]
+  responses       SicknessReportResponse[]
+
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([severity, status])
+  @@map("sickness_reports")
+}
+
+/// Sensitive health details. Access requires `health:read` permission and is
+/// recorded in audit log. Not exposed in list views, never returned to warga
+/// other than the reporter.
+model SicknessReportDetail {
+  id             String         @id @default(uuid()) @db.Uuid
+  reportId       String         @unique @map("report_id") @db.Uuid
+  symptoms       String
+  medicalNotes   String?        @map("medical_notes")
+  contactPhone   String?        @map("contact_phone")
+  helperId       String?        @map("helper_id") @db.Uuid
+  helper         User?          @relation(fields: [helperId], references: [id])
+  report         SicknessReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("sickness_report_details")
+}
+
+model SicknessReportResponse {
+  id            String                  @id @default(uuid()) @db.Uuid
+  reportId      String                  @map("report_id") @db.Uuid
+  responderId   String                  @map("responder_id") @db.Uuid
+  body          String
+  statusAfter   SicknessReportStatus?   @map("status_after")
+  createdAt     DateTime                @default(now()) @map("created_at")
+  report        SicknessReport          @relation(fields: [reportId], references: [id])
+  responder     User                    @relation(fields: [responderId], references: [id])
+
+  @@index([reportId, createdAt])
+  @@index([responderId])
+  @@map("sickness_report_responses")
 }
