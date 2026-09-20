@@ -63,8 +63,7 @@ export default function CmsProgramUpdatesPage() {
     <CmsShell session={session ?? null} active="/cms/program-updates" title="Program & Kegiatan" subtitle="Sampaikan perkembangan program RW untuk warga." actions={<button onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ Tambah program</button>}>
       <div className="mb-5 grid gap-4 sm:grid-cols-3">{[['Total program', items.length], ['Terbit', items.filter(item => item.status === 'PUBLISHED').length], ['Draft', items.filter(item => item.status === 'DRAFT').length]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-white p-5"><p className="text-xs text-[#6F7385]">{label}</p><p className="mt-3 text-2xl font-bold text-[#5B4BFF]">{value}</p></div>)}</div>
       {open ? <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <form onSubmit={submit} className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold">Tulis update program</h2>
+        <form onSubmit={submit} className="rounded-3xl bg-transparent"><div className="mb-5 flex flex-wrap items-end justify-between gap-4"><div><p className="text-[11px] font-semibold text-[#5B4BFF]">Program & kegiatan / Buat baru</p><h2 className="mt-2 text-3xl font-bold">Buat program baru</h2></div><div className="flex gap-2"><button type="button" onClick={() => setOpen(false)} className="h-10 rounded-full border border-[#E7E8EF] bg-white px-4 text-xs font-bold">Simpan draft</button><button className="h-10 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">Publikasikan</button></div></div><div className="rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-lg font-bold">Detail program</h2>
           <div className="mt-5 space-y-4">
             <input required placeholder="Judul" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
             <textarea required placeholder="Ceritakan perkembangan program..." value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="min-h-32 w-full rounded-xl border border-slate-200 p-4 text-sm" />
@@ -76,6 +75,7 @@ export default function CmsProgramUpdatesPage() {
             {error ? <ErrorBanner message={error} /> : null}
             {message ? <p className="text-sm text-emerald-700" role="status">{message}</p> : null}
             <button disabled={busy} className="h-12 w-full rounded-xl bg-[#5b4bff] text-sm font-bold text-white disabled:opacity-60">{busy ? 'Menyimpan...' : 'Simpan update'}</button>
+          </div>
           </div>
         </form>
 
