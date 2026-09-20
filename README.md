@@ -32,6 +32,11 @@ npm run test
 npm run build
 ```
 
+## Development workflow
+
+Workflow wajib: `docs/DEVELOPMENT-WORKFLOW.md` — technical refinement → breakdown/assignment → development → self-test → PR/code review → staging → QA → release approval → production smoke test → monitoring.
+
 ## Documentation
 
 Requirement dan arsitektur berada di `docs/project/`. Feature documentation fase MVP berada di `docs/features/`.
+
