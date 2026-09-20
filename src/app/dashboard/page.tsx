@@ -4,6 +4,16 @@ import { auth } from '@/auth'
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user) redirect('/')
+  if (session.user.status !== 'AKTIF') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f7fb] px-5 py-10">
+        <section className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Akun menunggu verifikasi</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">Akun berhasil dibuat. Pengurus RW perlu memverifikasi akun sebelum dashboard dapat digunakan.</p>
+        </section>
+      </main>
+    )
+  }
 
   const isPengurus = session.user.accountType === 'PENGURUS'
   return (

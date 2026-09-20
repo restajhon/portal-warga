@@ -4,6 +4,7 @@ declare module 'next-auth' {
   interface User {
     role?: 'SUPER_ADMIN' | 'ADMIN' | 'OPERASIONAL'
     accountType?: 'WARGA' | 'PENGURUS'
+    status?: 'MENUNGGU_VERIFIKASI' | 'AKTIF' | 'NONAKTIF'
   }
 
   interface Session {
@@ -11,6 +12,7 @@ declare module 'next-auth' {
       id: string
       role?: User['role']
       accountType?: User['accountType']
+      status?: User['status']
     } & DefaultSession['user']
   }
 }
@@ -19,5 +21,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     role?: 'SUPER_ADMIN' | 'ADMIN' | 'OPERASIONAL'
     accountType?: 'WARGA' | 'PENGURUS'
+    status?: 'MENUNGGU_VERIFIKASI' | 'AKTIF' | 'NONAKTIF'
   }
 }
