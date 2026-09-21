@@ -1,227 +1,43 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { CmsShell } from '@/components/cms-shell'
 import { EmptyState, ErrorBanner, Spinner } from '@/components/feedback'
 
 export const dynamic = 'force-dynamic'
-
-type Transaction = { id: string; type: string; paymentMethod: string; category: string; description: string; amount: string; occurredAt: string }
+type Transaction = { id: string; type: string; paymentMethod: string; category: string; description: string; amount: string; occurredAt: string; evidenceUrl?: string | null }
 type Report = { id: string; title: string; summary?: string | null; status: string; periodStart: string; periodEnd: string }
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Draft',
-  MENUNGGU_APPROVAL: 'Menunggu persetujuan',
-  DISETUJUI: 'Disetujui',
-  DIPUBLIKASIKAN: 'Dipublikasikan',
-}
+const STATUS_LABELS: Record<string, string> = { DRAFT: 'Draft', MENUNGGU_APPROVAL: 'Menunggu persetujuan', DISETUJUI: 'Disetujui', DIPUBLIKASIKAN: 'Dipublikasikan' }
+const money = (value: number) => `Rp ${value.toLocaleString('id-ID')}`
 
 export default function CmsFinancePage() {
   const { data: session, status: sessionStatus } = useSession()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [reports, setReports] = useState<Report[]>([])
-  const [txForm, setTxForm] = useState({ type: 'PEMASUKAN', paymentMethod: 'CASH', category: '', description: '', amount: '', occurredAt: '' })
-  const [reportForm, setReportForm] = useState({ title: '', summary: '', periodStart: '', periodEnd: '' })
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
-
-  const role = session?.user?.role
-  const canApprove = role === 'SUPER_ADMIN'
-
-  async function load() {
-    setLoading(true)
-    setError('')
-    const [t, r] = await Promise.all([fetch('/api/finance/transactions'), fetch('/api/finance/reports?scope=manage')])
-    if (!t.ok || !r.ok) {
-      setError('Gagal memuat data keuangan.')
-      setLoading(false)
-      return
-    }
-    setTransactions((await t.json()).data)
-    setReports((await r.json()).data)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (sessionStatus === 'authenticated') void load()
-  }, [sessionStatus])
-
-  async function submitTx(event: FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setMessage('')
-    setError('')
-    const response = await fetch('/api/finance/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...txForm, amount: Number(txForm.amount), occurredAt: txForm.occurredAt ? new Date(txForm.occurredAt).toISOString() : '' }),
-    })
-    const result = await response.json()
-    if (!response.ok) {
-      setError(result.error ?? 'Gagal menyimpan transaksi.')
-      setBusy(false)
-      return
-    }
-    setTxForm({ type: 'PEMASUKAN', paymentMethod: 'CASH', category: '', description: '', amount: '', occurredAt: '' })
-    setMessage('Transaksi tersimpan.')
-    setBusy(false)
-    await load()
-  }
-
-  async function submitReport(event: FormEvent) {
-    event.preventDefault()
-    setBusy(true)
-    setMessage('')
-    setError('')
-    const response = await fetch('/api/finance/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: reportForm.title,
-        summary: reportForm.summary || undefined,
-        periodStart: reportForm.periodStart ? new Date(reportForm.periodStart).toISOString() : '',
-        periodEnd: reportForm.periodEnd ? new Date(reportForm.periodEnd).toISOString() : '',
-      }),
-    })
-    const result = await response.json()
-    if (!response.ok) {
-      setError(result.error ?? 'Gagal membuat laporan.')
-      setBusy(false)
-      return
-    }
-    setReportForm({ title: '', summary: '', periodStart: '', periodEnd: '' })
-    setMessage('Laporan dikirim untuk menunggu persetujuan.')
-    setBusy(false)
-    await load()
-  }
-
-  async function changeReportStatus(id: string, action: 'approve' | 'publish') {
-    setBusy(true)
-    setMessage('')
-    setError('')
-    const response = await fetch(`/api/finance/reports/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    })
-    const result = await response.json()
-    if (!response.ok) {
-      setError(result.error ?? 'Aksi laporan gagal.')
-      setBusy(false)
-      return
-    }
-    setMessage(action === 'approve' ? 'Laporan disetujui.' : 'Laporan dipublikasikan.')
-    setBusy(false)
-    await load()
-  }
-
-  function download(report: Report, format: 'pdf' | 'xlsx') {
-    window.open(`/api/finance/reports/${report.id}/export?format=${format}`, '_blank')
-  }
-
-  return (
-    <CmsShell
-      session={session ?? null}
-      active="/cms/finance"
-      title="Keuangan RW"
-      subtitle="Catat transaksi dan kelola laporan berkala. Persetujuan & publikasi hanya dapat dilakukan Super Admin."
-    >
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <div className="space-y-6">
-          <form onSubmit={submitTx} className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">Catat transaksi</h2>
-            <div className="mt-5 space-y-4">
-              <select value={txForm.type} onChange={(e) => setTxForm({ ...txForm, type: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
-                <option value="PEMASUKAN">Pemasukan</option>
-                <option value="PENGELUARAN">Pengeluaran</option>
-              </select>
-              <select value={txForm.paymentMethod} onChange={(e) => setTxForm({ ...txForm, paymentMethod: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm">
-                <option value="CASH">Cash</option>
-                <option value="TRANSFER">Transfer</option>
-              </select>
-              <input required placeholder="Kategori" value={txForm.category} onChange={(e) => setTxForm({ ...txForm, category: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <input required placeholder="Nominal" type="number" min="1" value={txForm.amount} onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <input required type="datetime-local" value={txForm.occurredAt} onChange={(e) => setTxForm({ ...txForm, occurredAt: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <textarea required placeholder="Deskripsi" value={txForm.description} onChange={(e) => setTxForm({ ...txForm, description: e.target.value })} className="min-h-24 w-full rounded-xl border border-slate-200 p-4 text-sm" />
-              <button disabled={busy} className="h-12 w-full rounded-xl bg-[#5b4bff] text-sm font-bold text-white disabled:opacity-60">{busy ? 'Menyimpan...' : 'Simpan transaksi'}</button>
-            </div>
-          </form>
-
-          <form onSubmit={submitReport} className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">Buat laporan keuangan</h2>
-            <p className="mt-1 text-sm text-slate-500">Laporan akan berstatus menunggu persetujuan dan hanya dapat dipublikasikan oleh Super Admin.</p>
-            <div className="mt-5 space-y-4">
-              <input required placeholder="Judul laporan" value={reportForm.title} onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <textarea placeholder="Ringkasan (opsional)" value={reportForm.summary} onChange={(e) => setReportForm({ ...reportForm, summary: e.target.value })} className="min-h-24 w-full rounded-xl border border-slate-200 p-4 text-sm" />
-              <input required type="date" value={reportForm.periodStart} onChange={(e) => setReportForm({ ...reportForm, periodStart: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <input required type="date" value={reportForm.periodEnd} onChange={(e) => setReportForm({ ...reportForm, periodEnd: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
-              <button disabled={busy} className="h-12 w-full rounded-xl bg-[#5b4bff] text-sm font-bold text-white disabled:opacity-60">{busy ? 'Mengirim...' : 'Kirim untuk persetujuan'}</button>
-            </div>
-          </form>
-        </div>
-
-        <div className="space-y-6">
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">Transaksi terbaru</h2>
-            {loading ? <div className="mt-6"><Spinner /></div> : null}
-            {!loading && transactions.length === 0 ? (
-              <div className="mt-5"><EmptyState title="Belum ada transaksi" description="Catat transaksi pertama dari formulir di samping." /></div>
-            ) : null}
-            <div className="mt-5 space-y-3">
-              {transactions.slice(0, 10).map((t) => (
-                <article key={t.id} className="flex justify-between gap-4 rounded-2xl border border-slate-100 p-4">
-                  <div>
-                    <p className="font-bold">{t.category}</p>
-                    <p className="text-sm text-slate-500">{t.description} · {t.paymentMethod}</p>
-                  </div>
-                  <p className={t.type === 'PEMASUKAN' ? 'font-bold text-emerald-600' : 'font-bold text-red-600'}>
-                    {t.type === 'PEMASUKAN' ? '+' : '-'} Rp {Number(t.amount).toLocaleString('id-ID')}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">Laporan keuangan</h2>
-            {loading ? <div className="mt-6"><Spinner /></div> : null}
-            {!loading && reports.length === 0 ? (
-              <div className="mt-5"><EmptyState title="Belum ada laporan" description="Buat laporan periode tertentu dari formulir di samping." /></div>
-            ) : null}
-            <div className="mt-5 space-y-3">
-              {reports.map((report) => (
-                <article key={report.id} className="rounded-2xl border border-slate-100 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-bold text-slate-900">{report.title}</p>
-                      <p className="text-sm text-slate-500">Periode {new Date(report.periodStart).toLocaleDateString('id-ID')} – {new Date(report.periodEnd).toLocaleDateString('id-ID')}</p>
-                    </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{STATUS_LABELS[report.status] ?? report.status}</span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {report.status === 'MENUNGGU_APPROVAL' && canApprove ? (
-                      <button disabled={busy} onClick={() => changeReportStatus(report.id, 'approve')} className="rounded-full bg-[#5b4bff] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60">Setujui</button>
-                    ) : null}
-                    {report.status === 'DISETUJUI' && canApprove ? (
-                      <button disabled={busy} onClick={() => changeReportStatus(report.id, 'publish')} className="rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60">Publikasikan</button>
-                    ) : null}
-                    {report.status === 'MENUNGGU_APPROVAL' && !canApprove ? (
-                      <span className="text-xs text-slate-500">Menunggu Super Admin menyetujui.</span>
-                    ) : null}
-                    <button onClick={() => download(report, 'pdf')} className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#5b4bff] hover:text-[#5b4bff]">Unduh PDF</button>
-                    <button onClick={() => download(report, 'xlsx')} className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#5b4bff] hover:text-[#5b4bff]">Unduh XLSX</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {error ? <div className="mt-4"><ErrorBanner message={error} /></div> : null}
-            {message ? <p className="mt-4 text-sm text-emerald-700" role="status">{message}</p> : null}
-          </section>
-        </div>
-      </div>
-    </CmsShell>
-  )
+  const [transactions, setTransactions] = useState<Transaction[]>([]); const [reports, setReports] = useState<Report[]>([])
+  const [txForm, setTxForm] = useState({ type: 'PEMASUKAN', paymentMethod: 'CASH', category: '', description: '', amount: '', occurredAt: '' }); const [reportForm, setReportForm] = useState({ title: '', summary: '', periodStart: '', periodEnd: '' })
+  const [search, setSearch] = useState(''); const [typeFilter, setTypeFilter] = useState('ALL'); const [categoryFilter, setCategoryFilter] = useState('ALL'); const [showTx, setShowTx] = useState(false); const [showReport, setShowReport] = useState(false)
+  const [message, setMessage] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false)
+  const canApprove = session?.user?.role === 'SUPER_ADMIN'
+  async function load() { setLoading(true); const [t, r] = await Promise.all([fetch('/api/finance/transactions'), fetch('/api/finance/reports?scope=manage')]); if (!t.ok || !r.ok) { setError('Gagal memuat data keuangan.'); setLoading(false); return }; setTransactions((await t.json()).data); setReports((await r.json()).data); setLoading(false) }
+  useEffect(() => { if (sessionStatus === 'authenticated') void load() }, [sessionStatus])
+  async function submitTx(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); const response = await fetch('/api/finance/transactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...txForm, amount: Number(txForm.amount), occurredAt: txForm.occurredAt ? new Date(txForm.occurredAt).toISOString() : '' }) }); const result = await response.json(); if (!response.ok) { setError(result.error ?? 'Gagal menyimpan transaksi.'); setBusy(false); return }; setTxForm({ type: 'PEMASUKAN', paymentMethod: 'CASH', category: '', description: '', amount: '', occurredAt: '' }); setShowTx(false); setMessage('Transaksi tersimpan.'); setBusy(false); await load() }
+  async function submitReport(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); const response = await fetch('/api/finance/reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: reportForm.title, summary: reportForm.summary || undefined, periodStart: reportForm.periodStart ? new Date(reportForm.periodStart).toISOString() : '', periodEnd: reportForm.periodEnd ? new Date(reportForm.periodEnd).toISOString() : '' }) }); const result = await response.json(); if (!response.ok) { setError(result.error ?? 'Gagal membuat laporan.'); setBusy(false); return }; setReportForm({ title: '', summary: '', periodStart: '', periodEnd: '' }); setShowReport(false); setMessage('Laporan dikirim untuk persetujuan.'); setBusy(false); await load() }
+  async function changeReportStatus(id: string, action: 'approve' | 'publish') { setBusy(true); const response = await fetch(`/api/finance/reports/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) }); const result = await response.json(); if (!response.ok) setError(result.error ?? 'Aksi laporan gagal.'); else { setMessage(action === 'approve' ? 'Laporan disetujui.' : 'Laporan dipublikasikan.'); await load() }; setBusy(false) }
+  const categories = useMemo(() => [...new Set(transactions.map(item => item.category))], [transactions])
+  const visible = useMemo(() => transactions.filter(item => (!search || `${item.description} ${item.category}`.toLowerCase().includes(search.toLowerCase())) && (typeFilter === 'ALL' || item.type === typeFilter) && (categoryFilter === 'ALL' || item.category === categoryFilter)), [transactions, search, typeFilter, categoryFilter])
+  const income = transactions.filter(item => item.type === 'PEMASUKAN').reduce((sum, item) => sum + Number(item.amount), 0); const expense = transactions.filter(item => item.type === 'PENGELUARAN').reduce((sum, item) => sum + Number(item.amount), 0); const balance = income - expense; const missingEvidence = transactions.filter(item => !item.evidenceUrl).length
+  return <CmsShell session={session ?? null} active="/cms/finance" title="Keuangan RW" subtitle="Kelola pemasukan, pengeluaran, bukti transaksi, dan laporan berkala." actions={<div className="flex gap-2"><button onClick={() => setShowReport(true)} className="h-11 rounded-full border border-[#E4E5EC] bg-white px-5 text-xs font-bold">▧ &nbsp; Buat laporan</button><button onClick={() => setShowTx(true)} className="h-11 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">＋ &nbsp; Tambah transaksi</button></div>}>
+    <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Summary label="Saldo saat ini" value={money(balance)} color="text-[#5B4BFF]" /><Summary label="Pemasukan bulan ini" value={money(income)} color="text-[#16875A]" /><Summary label="Pengeluaran bulan ini" value={money(expense)} color="text-[#D95D5D]" /><Summary label="Belum ada bukti" value={`${missingEvidence} transaksi`} color="text-[#B77A00]" /></div>
+    {showTx ? <form onSubmit={submitTx} className="mb-5 rounded-3xl border border-[#D9D5FF] bg-white p-6 shadow-sm"><EditorHeader title="Tambah transaksi" close={() => setShowTx(false)} /><div className="grid gap-4 md:grid-cols-2"><Select label="Tipe" value={txForm.type} onChange={value => setTxForm({ ...txForm, type: value })} options={['PEMASUKAN', 'PENGELUARAN']} /><Select label="Metode pembayaran" value={txForm.paymentMethod} onChange={value => setTxForm({ ...txForm, paymentMethod: value })} options={['CASH', 'TRANSFER']} /><Input label="Kategori" value={txForm.category} onChange={value => setTxForm({ ...txForm, category: value })} /><Input label="Nominal" type="number" value={txForm.amount} onChange={value => setTxForm({ ...txForm, amount: value })} /><Input label="Tanggal" type="datetime-local" value={txForm.occurredAt} onChange={value => setTxForm({ ...txForm, occurredAt: value })} /><Input label="Deskripsi" value={txForm.description} onChange={value => setTxForm({ ...txForm, description: value })} /></div><button disabled={busy} className="mt-5 h-11 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">Simpan transaksi</button></form> : null}
+    {showReport ? <form onSubmit={submitReport} className="mb-5 rounded-3xl border border-[#D9D5FF] bg-white p-6 shadow-sm"><EditorHeader title="Buat laporan keuangan" close={() => setShowReport(false)} /><div className="grid gap-4 md:grid-cols-2"><Input label="Judul laporan" value={reportForm.title} onChange={value => setReportForm({ ...reportForm, title: value })} /><Input label="Ringkasan" value={reportForm.summary} onChange={value => setReportForm({ ...reportForm, summary: value })} /><Input label="Periode mulai" type="date" value={reportForm.periodStart} onChange={value => setReportForm({ ...reportForm, periodStart: value })} /><Input label="Periode selesai" type="date" value={reportForm.periodEnd} onChange={value => setReportForm({ ...reportForm, periodEnd: value })} /></div><button disabled={busy} className="mt-5 h-11 rounded-full bg-[#5B4BFF] px-5 text-xs font-bold text-white">Kirim untuk persetujuan</button></form> : null}
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"><div className="flex min-w-[260px] flex-1 items-center gap-2 rounded-xl bg-[#F7F7FA] px-4"><span className="text-[#8D91A1]">⌕</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Cari deskripsi transaksi..." className="h-11 w-full bg-transparent text-sm outline-none" /></div><Filter value={typeFilter} onChange={setTypeFilter} options={[['ALL', 'Semua tipe'], ['PEMASUKAN', 'Pemasukan'], ['PENGELUARAN', 'Pengeluaran']]} /><Filter value={categoryFilter} onChange={setCategoryFilter} options={[['ALL', 'Semua kategori'], ...categories.map(category => [category, category])]} /></div>
+    {error ? <div className="mb-4"><ErrorBanner message={error} /></div> : null}{message ? <p className="mb-4 text-sm text-emerald-700">{message}</p> : null}
+    <section className="overflow-hidden rounded-3xl border-2 border-[#62A9E8] bg-white shadow-sm"><div className="hidden grid-cols-[90px_1.5fr_1fr_120px_140px_70px_30px] gap-4 border-b border-[#D9EFFF] bg-[#FBFCFF] px-4 py-4 text-[10px] font-bold uppercase tracking-wide text-[#8D91A1] md:grid"><span>Tanggal</span><span>Transaksi</span><span>Kategori</span><span>Tipe</span><span>Nominal</span><span>Bukti</span><span /></div>{loading ? <div className="p-8"><Spinner /></div> : null}{!loading && visible.length === 0 ? <div className="p-8"><EmptyState title="Belum ada transaksi" description="Tambahkan transaksi untuk mulai mengelola kas RW." /></div> : null}<div>{visible.map(item => <div key={item.id} className="grid gap-2 border-b border-[#D9EFFF] px-4 py-4 text-sm md:grid-cols-[90px_1.5fr_1fr_120px_140px_70px_30px] md:items-center md:gap-4"><span className="text-xs text-[#8D91A1]">{new Date(item.occurredAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span><span className="font-bold">{item.description}</span><span className="text-xs text-[#6F7385]">{item.category}</span><span className={item.type === 'PEMASUKAN' ? 'text-xs font-semibold text-[#16875A]' : 'text-xs font-semibold text-[#D95D5D]'}>{item.type === 'PEMASUKAN' ? 'Pemasukan' : 'Pengeluaran'}</span><span className="font-bold">{money(Number(item.amount))}</span><span className={item.evidenceUrl ? 'text-[#16875A]' : 'text-[#B77A00]'}>{item.evidenceUrl ? '▣' : '□'}</span><span className="text-[#8D91A1]">⋯</span></div>)}</div></section>
+    {reports.length > 0 ? <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm"><h2 className="font-bold">Laporan keuangan</h2><div className="mt-4 space-y-3">{reports.map(report => <div key={report.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 p-4"><div><p className="font-bold">{report.title}</p><p className="text-xs text-[#6F7385]">{new Date(report.periodStart).toLocaleDateString('id-ID')} – {new Date(report.periodEnd).toLocaleDateString('id-ID')}</p></div><div className="flex items-center gap-2"><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{STATUS_LABELS[report.status]}</span>{report.status === 'MENUNGGU_APPROVAL' && canApprove ? <button onClick={() => changeReportStatus(report.id, 'approve')} className="rounded-full bg-[#5B4BFF] px-3 py-1.5 text-xs font-bold text-white">Setujui</button> : null}{report.status === 'DISETUJUI' && canApprove ? <button onClick={() => changeReportStatus(report.id, 'publish')} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white">Publikasikan</button> : null}</div></div>)}</div></section> : null}
+  </CmsShell>
 }
+function Summary({ label, value, color }: { label: string; value: string; color: string }) { return <div className="rounded-3xl bg-white p-5 shadow-sm"><p className="text-xs text-[#6F7385]">{label}</p><p className={`mt-3 text-xl font-bold ${color}`}>{value}</p></div> }
+function EditorHeader({ title, close }: { title: string; close: () => void }) { return <div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">{title}</h2><button type="button" onClick={close} className="text-sm font-semibold text-[#6F7385]">Tutup</button></div> }
+function Input({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; type?: string }) { return <label className="text-xs font-semibold text-[#6F7385]">{label}<input required={label !== 'Ringkasan'} type={type} value={value} onChange={event => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm font-normal text-[#111322]" /></label> }
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) { return <label className="text-xs font-semibold text-[#6F7385]">{label}<select value={value} onChange={event => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm font-normal text-[#111322]">{options.map(option => <option key={option} value={option}>{option}</option>)}</select></label> }
+function Filter({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: string[][] }) { return <select value={value} onChange={event => onChange(event.target.value)} className="h-10 rounded-full border-0 bg-[#F7F7FA] px-4 text-xs font-semibold">{options.map(option => <option key={option[0]} value={option[0]}>{option[1]}</option>)}</select> }
